@@ -1,100 +1,170 @@
-# financial predictions
+# Financial Predictions with Kedro
 
-[![Powered by Kedro](https://img.shields.io/badge/powered_by-kedro-ffc900?logo=kedro)](https://kedro.org)
+[![Powered by Kedro](https://img.shields.io/badge/powered_by-kedro-ffc900?logo=kedro)](https://kedro.org)  
+[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-## Overview
+## Context & Objectives
 
-This is your new Kedro project with PySpark setup, which was generated using `kedro 0.19.12`.
+This project demonstrates how to structure a professional data science workflow using **Kedro**, from initial exploration in a notebook to final model evaluation. We use an imbalanced banking marketing dataset (UCI Bank Marketing) and an XGBoost classifier. You will learn to:
 
-Take a look at the [Kedro documentation](https://docs.kedro.org) to get started.
+- Organize data and configuration in a **Data Catalog**.
+- Build, test, and run reusable **pipelines** for each stage:  
+  1. **Data Processing** (cleaning, train/test split)  
+  2. **EDA** (statistical and visual exploration)  
+  3. **Feature Engineering** (preprocessing, encoding, scaling)  
+  4. **Model Training** (XGBoost, feature selection, final training)  
+  5. **Evaluation** (precision, recall, AUC)  
+- Ensure **reproducibility** and **traceability** throughout the project.
 
-## Rules and guidelines
+## Prerequisites
 
-In order to get the best out of the template:
+- Python 3.10+  
+- Virtual environment  
+- Git  
+- On macOS: Homebrew for libomp (required by XGBoost)
 
-* Don't remove any lines from the `.gitignore` file we provide
-* Make sure your results can be reproduced by following a [data engineering convention](https://docs.kedro.org/en/stable/faq/faq.html#what-is-data-engineering-convention)
-* Don't commit data to your repository
-* Don't commit any credentials or your local configuration to your repository. Keep all your credentials and local configuration in `conf/local/`
+## Installation
 
-## How to install dependencies
+1. **Create & activate** the Conda environment:  
 
-Declare any dependencies in `requirements.txt` for `pip` installation.
+   ```bash
+   conda create --name kedro-financial-predictions python=3.10 -y
+   conda activate kedro-financial-predictions
 
-To install them, run:
+2. **Install project dependencies**:
 
-```
-pip install -r requirements.txt
-```
+    ```bash
+    git clone <your-gitlab-repo>
+    cd kedro
+    pip install -r requirements.txt
+    pip install "kedro-datasets[pandas]"  # for CSVDataset & ParquetDataset
 
-## How to run your Kedro pipeline
+3. **(macOS) Install OpenMP for XGBoost**:
 
-You can run your Kedro project with:
+    ```bash
+    brew install libomp
+    export LDFLAGS="-L/opt/homebrew/opt/libomp/lib"
+    export CPPFLAGS="-I/opt/homebrew/opt/libomp/include"
 
-```
-kedro run
-```
+## Project Structure
 
-## How to test your Kedro project
+    .
+    ├── conf/
+    │   ├── base/
+    │   │   ├── catalog.yml
+    │   │   └── parameters.yml
+    │   └── local/
+    ├── data/
+    ├── notebooks/
+    ├── src/
+    │   └── financial_predictions/
+    │       ├── pipelines/
+    │       └── ...
+    ├── tests/
+    ├── README.md
+    └── requirements.txt
 
-Have a look at the files `src/tests/test_run.py` and `src/tests/pipelines/data_science/test_pipeline.py` for instructions on how to write your tests. Run the tests as follows:
+## Data Catalog
 
-```
-pytest
-```
+| Dataset                       | Type             | Purpose                               |
+| ----------------------------- | ---------------- | ------------------------------------- |
+| `bank`                        | `CSVDataset`     | Raw dataset                           |
+| `preprocessed_bank`           | `ParquetDataset` | Cleaned version                       |
+| `grouped_mean`                | `CSVDataset`     | EDA summary statistics                |
+| `data_train`, `data_test`     | `ParquetDataset` | Split datasets                        |
+| `attrs_map`                   | `ParquetDataset` | Feature metadata                      |
+| `X_*`, `y_*`                  | `ParquetDataset` | Transformed features & targets        |
+| `xgb_model`                   | `PickleDataset`  | Trained model                         |
+| `y_pred_test`, `y_proba_test` | `JSONDataset`    | Prediction results                    |
+| `model_metrics`               | `JSONDataset`    | Final evaluation (precision, recall…) |
 
-To configure the coverage threshold, look at the `.coveragerc` file.
+## Kedro Pipelines
 
-## Project dependencies
+### 1. Data processing
 
-To see and update the dependency requirements for your project use `requirements.txt`. Install the project requirements with `pip install -r requirements.txt`.
+- **Nodes:** `clean_data`, `split_raw_data`
+- **Function:** Drop nulls, convert types, train/test split
+- **Params:** `split_data.test_size`, `split_data.random_state`
 
-[Further information about project dependencies](https://docs.kedro.org/en/stable/kedro_project_setup/dependencies.html#project-specific-dependencies)
+### 2. EDA
 
-## How to work with Kedro and notebooks
+- **Nodes:** `get_dtypes`, `plot_count`, `groupby_mean`, `plot_pairplot`, `plot_heatmap`
+- **Function:** Explore types, balance, distribution, correlations
+- **Params:** `num_cols`, `num_cols_with_y`
 
-> Note: Using `kedro jupyter` or `kedro ipython` to run your notebook provides these variables in scope: `catalog`, `context`, `pipelines` and `session`.
->
-> Jupyter, JupyterLab, and IPython are already included in the project requirements by default, so once you have run `pip install -r requirements.txt` you will not need to take any extra steps before you use them.
+### 3. Feature Engineering
 
-### Jupyter
-To use Jupyter notebooks in your Kedro project, you need to install Jupyter:
+- **Nodes:** `split_attributes`, `transform_features`, `transform_target`
+- **Function:** Extract features, encode + scale inputs, encode target
+- **Output:** `X_train`, `X_test`, `y_train`, `y_test`
 
-```
-pip install jupyter
-```
+### 4. Model Training
 
-After installing Jupyter, you can start a local notebook server:
+- **Nodes:**  `find_best_weight`, `train_initial_model`, `select_features_transformer`, `transform_train`, `train_final_model`, `transform_test`, `predict_model`
+- **Function:** Weight tuning → train XGBoost → feature selection → prediction
+- **Output:** `xgb_model`, `y_pred_test`, `y_proba_test`
 
-```
-kedro jupyter notebook
-```
+### 5. Evaluation
 
-### JupyterLab
-To use JupyterLab, you need to install it:
+- **Nodes:** `evaluate_model`
+- **Function:** Compute `recall`, `precision`, and `roc_auc` from predictions
 
-```
-pip install jupyterlab
-```
+## Run Pipelines
 
-You can also start JupyterLab:
+Run the full pipeline:
 
-```
-kedro jupyter lab
-```
+    kedro run
 
-### IPython
-And if you want to run an IPython session:
+Run a specific one:
 
-```
-kedro ipython
-```
+    kedro run --pipeline=model_training
 
-### How to ignore notebook output cells in `git`
-To automatically strip out all output cell contents before committing to `git`, you can use tools like [`nbstripout`](https://github.com/kynan/nbstripout). For example, you can add a hook in `.git/config` with `nbstripout --install`. This will run `nbstripout` before anything is committed to `git`.
+Or resume from a specific node:
 
-> *Note:* Your output cells will be retained locally.
+    kedro run --from-nodes=train_final_model_node
 
-## Package your Kedro project
+## Testing
 
-[Further information about building project documentation and packaging your project](https://docs.kedro.org/en/stable/tutorial/package_a_project.html)
+Run tests:
+
+    pytest
+
+Linter:
+
+    ruff check
+
+## Publish and Share on AWS
+
+Once your pipelines are working locally, you’ll want to make your work visible and reproducible by others. Below are two common flows: sharing your **Kedro Viz** site, and packaging your project for distribution.
+
+### 1. Set AWS Credentials
+
+In your terminal, export your AWS keys so Kedro‑Viz can push to S3:
+
+    export AWS_ACCESS_KEY_ID="your_access_key_id"
+    export AWS_SECRET_ACCESS_KEY="your_secret_access_key"
+    
+### 2. Publish via the Kedro‑Viz UI
+
+**1. Start the Viz app:**
+
+    kedro viz run
+
+**2. Click the Publish & share icon in the lower‑left corner.**
+**3. In the modal:**
+
+- Select hosting platform (e.g. AWS S3)
+- Enter your Bucket name and Endpoint URL
+- Toggle All dataset previews on or off.
+
+**4. Click Publish and copy the shareable URL when it appears.**
+
+## Contribution Guidelines
+
+- Follow PEP8 (enforced by `ruff`)
+- Do not commit raw data or secrets
+- Put all secrets in `conf/local/` (not versioned)
+
+## Acknowledgments
+
+This project adapts a Jupyter notebook originally from IBM’s xgboost-financial-predictions repo into a modular, reproducible Kedro pipeline.
