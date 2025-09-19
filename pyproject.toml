@@ -1,0 +1,51 @@
+[tool.poetry]
+name = "kedro-benchmark"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+package-mode = true
+
+[tool.kedro]
+project_name = "kedro-benchmark" # Add project name
+package_name = "financial_predictions" # Add package name
+kedro_init_version = "0.19.12" # Add kedro init version
+
+[tool.poetry.dependencies]
+python = ">=3.10" # Match requires-python
+kedro = ">=0.19.12,<0.20.0"
+kedro-viz = ">=11.0.1,<12.0.0"
+kedro-datasets = ">=6.0.0,<7.0.0"
+scikit-learn = ">=1.6.1,<2.0.0"
+pyarrow = "^20.0.0"
+seaborn = "^0.13.0" # Added seaborn
+xgboost = "^2.0.0" # Added xgboost
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.11.6"
+pytest = "^8.3.5"
+jupyterlab = "^4.4.1"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+# Remove the [project] table if you move everything to [tool.poetry]
+# [project]
+# name = "kedro-benchmark"
+# version = "0.1.0"
+# description = ""
+# authors = [
+#     {name = "Your Name",email = "you@example.com"}
+# ]
+# readme = "README.md"
+# requires-python = ">=3.13"
+# dependencies = [
+#     "kedro (>=0.19.12,<0.20.0)",
+#     "kedro-viz (>=11.0.1,<12.0.0)",
+#     "kedro-datasets (>=6.0.0,<7.0.0)",
+#     "scikit-learn (>=1.6.1,<2.0.0)"
+# ]
+
+[tool.kedro_telemetry]
+project_id = "27096c07c8f54d05ba53701af44abd76"

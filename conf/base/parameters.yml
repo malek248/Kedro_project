@@ -1,0 +1,26 @@
+num_cols: ["age", "balance", "day", "duration", "campaign", "pdays", "previous"]
+num_cols_with_y: ["age", "balance", "day", "duration", "campaign", "pdays", "previous", "y"]
+
+split_data:
+  test_size: 0.1
+  random_state: 0
+
+xgb_train:
+  scale_pos_weight: 1
+  use_label_encoder: False
+  eval_metric: auc
+
+
+model_training:
+  # CV settings
+  weights: [1, 5, 20, 50, 100, 1000, 10000]
+  cv: 3
+  # Feature‑importance threshold
+  feature_threshold: 0.008
+  # Base XGB params (you can override these)
+  xgb:
+    use_label_encoder: False
+    eval_metric: auc
+    scale_pos_weight: 1
+
+
